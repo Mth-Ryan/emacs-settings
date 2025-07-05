@@ -26,9 +26,16 @@
 
 ;; Extra paths
 (defun add-to-path (path)
-  (let ((expanded-path (expand-file-name path)))
-    (setenv "PATH" (concat (getenv "PATH") ":" expanded-path))
-    (setq exec-path (append exec-path (list expanded-path)))))
+  (let* ((expanded-path (expand-file-name path))
+         (exec-path-form expanded-path)
+         (env-path-form (if (eq system-type 'windows-nt)
+                            (subst-char-in-string ?/ ?\\ expanded-path)
+                          expanded-path))
+         (path-separator (if (eq system-type 'windows-nt) ";" ":"))
+         (current-path (getenv "PATH")))
+    (unless (member exec-path-form exec-path)
+      (setenv "PATH" (concat current-path path-separator env-path-form))
+      (setq exec-path (append exec-path (list exec-path-form))))))
 
 (add-to-path "~/.asdf/shims")
 (add-to-path "~/.sdkman/candidates/java/current/bin")
